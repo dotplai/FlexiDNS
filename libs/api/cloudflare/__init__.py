@@ -134,12 +134,16 @@ class CloudFlare:
                 __logger__.__verbose__(f"Updated cache with {data}.")
             
             if self.cache_persistent:
-                data = self.cache.read()
-                
-                if not self.cache.is_same(data):
+                try:
+                    data = self.cache.read()
+                    
+                    if not self.cache.is_same(data):
+                        self.cache.commit()
+                        __logger__.__verbose__("Committed cache to Persistent Cache.")
+                    else: __logger__.__verbose__("No changes needed for Persistent Cache is is already up-to-date.")
+                except FileNotFoundError:
                     self.cache.commit()
                     __logger__.__verbose__("Committed cache to Persistent Cache.")
-                else: __logger__.__verbose__("No changes needed for Persistent Cache is is already up-to-date.")
         
         # Check if the content is already up-to-date
         if content == old_record[0]['content']:
