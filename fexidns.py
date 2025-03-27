@@ -27,9 +27,13 @@ config.read('config.ini')
 enabled_apis = [_ for _ in config.sections() if _ and config.getboolean(_, "enabled", fallback=False)]
 interval_time = config.getint("General", "intervalTime", fallback=800) * 60
 
+global domain_type
+
 def initialize_api(section, cls):
     """Initialize API clients dynamically based on config."""
     if not section: return None, []
+    
+    domain_type = config.get(section, "domain_type")
     
     credentials = {
         "email": config.get(section, "email", fallback="").strip('",'),
@@ -56,7 +60,9 @@ async def integrateInstance(integrate: str, instance: any, fqdns: list[str], con
     for fqdn in fqdns:
         try:
             __logger__.log(f"Updating record: {fqdn} -> {content}", temp_integrate=integrate)
-            instance.A(fqdn, content)
+            if domain_type.__eq__('A'): instance.A(fqdn, content)
+            elif domain_type.__eq__('AAAA'): instance.AAAA(fqdn, content)
+            else: raise TypeError("Domain type now must contains with 'A' or 'AAAA'")
         except Exception as e:
             LoggedException(e, api=integrate)
 
@@ -68,9 +74,9 @@ async def interval_loop() -> NoReturn:
         start_time = asyncio.get_event_loop().time()
         
         try:
-            ip_address: str = ipify(4).get_address(format='json').json().get('ip', '')
+            ip_address: str = ipify(4 if domain_type.__eq__('A') else 6).get_address(format='json').json().get('ip', '')
             if not ip_address:
-                __logger__.log("Public IP not retrieved, skipping update", 30)
+                __logger__.log(f"Public IPv{'4' if domain_type.__eq__('A') else '6'} not retrieved, skipping update", 30)
                 continue
             
             # Update all enabled APIs

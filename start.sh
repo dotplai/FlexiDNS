@@ -19,11 +19,6 @@ for file in "$TEMPLATE_DIR"/*; do
     echo "Copied $filename to $BASE_PROJECT_DIR"
 done
 
-echo "NOTICE: IPv6 support is currently under development and not available in this version."
-echo "        The full IPv6 functionality will be supported in the upcoming version 1.1.0"
-echo "- Stay tuned for updates! -"
-echo ""
-
 # Prompt the user to confirm using a virtual environment
 read -p "Do you want to use a virtual environment? (y/n): " USE_VENV
 
@@ -65,7 +60,7 @@ else
         pip3 install -r requirements.txt
     fi
 
-    python3 main.py
+    python3 fexidns.py
 fi
 
 # End of the script
