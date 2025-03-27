@@ -45,7 +45,7 @@ if [[ "$USE_VENV" == "y" || "$USE_VENV" == "Y" ]]; then
     if ! pip3 freeze | grep -qF -f requirements.txt; then
         echo "Installing missing dependencies from requirements.txt..."
         pip3 install -r requirements.txt
-    fi
+    fi  
 
     # Run the application
     echo "Starting the application..."
