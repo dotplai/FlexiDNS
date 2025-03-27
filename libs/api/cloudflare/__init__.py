@@ -207,7 +207,7 @@ class CloudFlare:
         if not old_record:
             LoggedException(KeyError(f"No domain name '{fqdn}' found in your DNS records. Please create it first."), integrate)
 
-        self.cmit()
+        self.__cmit()
         
         # Check if the content is already up-to-date
         if content == old_record[0]['content']:
