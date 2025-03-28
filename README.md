@@ -8,7 +8,7 @@ FlexiDNS is a flexible and dynamic IP resolver and DNS updater designed for seam
 - **Multi-API Support:** Compatible with services.
 - **Cache Persistence:** Keeps cached data even after unexpected program exits.
 - **Customizable Interval Timeout:** Set the interval time between each loop for DNS checks.
-- **IPv4 and IPv6 Ready:** IPv6 support coming in version 1.4.0.
+- **IPv4 and IPv6 Ready:** IPv4/6 is fully supported* (Some APIs only)
 - **Error Handling:** Robust logging and error handling with customizable verbosity levels.
 
 ## Requirements

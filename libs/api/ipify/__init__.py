@@ -1,4 +1,3 @@
-from deprecated import deprecated
 import requests
 
 class ipify:

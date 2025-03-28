@@ -1,6 +1,5 @@
 import json
 from typing import Literal, Self, TypeAlias
-from deprecated import deprecated
 import requests
 from libs.logger import LoggedException, logger
 
