@@ -36,6 +36,7 @@ FlexiDNS is a flexible and dynamic IP resolver and DNS updater designed for seam
 
    [CloudFlare]
    enabled = True
+   domain_type= 'A'
    email = "your-email@example.com"
    password = "your-api-token"
    FQDNv4 = ["example.com", "subdomain.example.com"]
