@@ -3,7 +3,7 @@ import math
 from typing import Literal, Optional, Self, TypeAlias
 import requests
 from libs.logger import LoggedException, logger
-from libs.api.cloudflare.__cache__ import RecordsCache
+from libs.RecordsCache import RecordsCache
 
 class Logger:
     def __init__(self, integrate: str):
@@ -27,7 +27,7 @@ class CloudFlare:
         }
         
         _ct = math.inf if cache_timeout.__le__(-1) else cache_timeout
-        self.cache: Optional[type[RecordsCache]] = RecordsCache().build(timeout=_ct) if _ct.__ne__(0) else None
+        self.cache: Optional[type[RecordsCache]] = RecordsCache().build(timeout=_ct, cache_name='cloudflare_records') if _ct.__ne__(0) else None
         self.cache_persistent = cache_persistent
         
     def getZoneId(self: Self, domain: str) -> str:
@@ -102,11 +102,12 @@ class CloudFlare:
             "SDN": ".".join(parts[:-2]) if len(parts) > 2 else None
         }
         
-    def __cmit(self, zone_id: str, fqdn: str, dns_record_id: str) -> None:
+    def __cmit(self, domain_type: str, zone_id: str, fqdn: str, dns_record_id: str) -> None:
         # Cache the retrieved ZoneID and DNSRecordID if caching is enabled
         if not self.cache: return
         
         data = {
+            "domain_type": domain_type,
             "zone_id": zone_id, "dns_record_id": dns_record_id
         }
         
@@ -134,6 +135,7 @@ class CloudFlare:
         Update an A record in Cloudflare's DNS using the provided parameters.
         Handles caching for ZoneID and DNSRecordID to improve performance.
         """
+        domain_type = "A"
         if self.cache: self.__pokeCache__()
 
         # Split FQDN into components
@@ -153,7 +155,7 @@ class CloudFlare:
             LoggedException(KeyError(f"No domain name '{fqdn}' found in your DNS records. Please create it first."), integrate)
 
         # Cache the retrieved ZoneID and DNSRecordID if caching is enabled
-        self.__cmit(zone_id, fqdn, dns_record_id)           
+        self.__cmit(domain_type, zone_id, fqdn, dns_record_id)           
         
         # Check if the content is already up-to-date
         if content == old_record[0]['content']:
@@ -162,7 +164,7 @@ class CloudFlare:
         # Prepare data for the DNS record update
         url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{dns_record_id}"
         data = {
-            "type": "A",
+            "type": domain_type,
             "name": fqdn,
             "content": content,
             "ttl": ttl if ttl is not None else old_record[0]['ttl'],
@@ -189,6 +191,7 @@ class CloudFlare:
         Update an AAAA record in Cloudflare's DNS using the provided parameters.
         Handles caching for ZoneID and DNSRecordID to improve performance.
         """
+        domain_type = "AAAA"
         if self.cache_persistent: self.__pokeCache__()
         
         # Split FQDN into components
@@ -207,7 +210,7 @@ class CloudFlare:
         if not old_record:
             LoggedException(KeyError(f"No domain name '{fqdn}' found in your DNS records. Please create it first."), integrate)
 
-        self.__cmit()
+        self.__cmit(domain_type, zone_id, fqdn, dns_record_id)
         
         # Check if the content is already up-to-date
         if content == old_record[0]['content']:
@@ -216,7 +219,7 @@ class CloudFlare:
         # Prepare data for the DNS record update
         url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{dns_record_id}"
         data = {
-            "type": "AAAA",
+            "type": domain_type,
             "name": fqdn,
             "content": content,
             "ttl": ttl if ttl is not None else old_record[0]['ttl'],
@@ -237,7 +240,5 @@ class CloudFlare:
             LoggedException(ConnectionRefusedError(f"Failed to update content of '{fqdn}' to '{content}'. Errors: {result['errors']}"), integrate)
 
         __logger__.__logging__(f"Successfully updated DNS record for '{fqdn}' with new content: {content}")
-
-
 
 __logger__ = Logger(CloudFlare.integrate)

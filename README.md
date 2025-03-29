@@ -8,21 +8,13 @@ FlexiDNS is a flexible and dynamic IP resolver and DNS updater designed for seam
 - **Multi-API Support:** Compatible with services.
 - **Cache Persistence:** Keeps cached data even after unexpected program exits.
 - **Customizable Interval Timeout:** Set the interval time between each loop for DNS checks.
-- **IPv4 and IPv6 Ready:** IPv4/6 is fully supported* (Some APIs only)
+- **IPv4 and IPv6 Ready:** IPv4/6 is [<span title="Only some APIs supported now.">fully supported*</span>]()
 - **Error Handling:** Robust logging and error handling with customizable verbosity levels.
 
 ## Requirements
 
 - Python 3.8 or higher
 - Virtual environment setup (recommended)
-
-### Python Modules
-
-Install the required Python modules by running:
-
-```bash
-pip install -r requirements.txt
-```
 
 ## Installation
 
@@ -33,37 +25,24 @@ pip install -r requirements.txt
    cd FlexiDNS
    ```
 
-2. Set up a virtual environment (optional but recommended):
-
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-
-3. Install dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
 ## Configuration
 
 1. Open the `config.ini` file to configure the application. Here's an example:
 
    ```ini
    [General]
+   loopingMethod = "intervalTime"
    intervalTime = 720
 
    [CloudFlare]
    enabled = True
    email = "your-email@example.com"
    password = "your-api-token"
-   FQDN = ["example.com", "subdomain.example.com"]
+   FQDNv4 = ["example.com", "subdomain.example.com"]
+   FQDNv6 = ["example.com", "subdomain.example.com"]
    cacheTimeout = 172800
    cachePersistent = True
    ```
-
-2. Adjust the `intervalTime`, API credentials, and other parameters according to your needs.
 
 ## Usage
 
@@ -84,9 +63,9 @@ Logs are saved in the `logs/` directory:
 
 ## Development Roadmap
 
-- **Version 1.4.0:** Full support for IPv6.
 - **Additional APIs:** Support for more DNS providers.
 - **Enhanced Logging:** Improved log management and filters.
+- **Additional Looping Method:** Support for more Looping Method.
 
 ## Contributing
 

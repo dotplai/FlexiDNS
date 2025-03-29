@@ -6,7 +6,7 @@ import os
 import time
 
 class RecordsCache:
-    def __init__(self, cache_directory: str = 'cache') -> None:
+    def __init__() -> None:
         """
         Initializes a RecordsCache instance with a specified cache directory.
 
@@ -22,10 +22,8 @@ class RecordsCache:
         cache.build({...})  # Build cache with preloaded data.
         ```
         """
-        os.makedirs(cache_directory, exist_ok=True)
-        self.cache_record_path = os.path.join(cache_directory, 'records.cache')
         
-    def build(self, pre_data: dict = None, timeout: int = 86400) -> Self:
+    def build(self, cache_name: str = 'records', pre_data: dict = None, timeout: int = 86400, cache_directory: str = 'cache') -> Self:
         """
         Builds a new cache instance with optional preloaded data and a timeout.
 
@@ -33,9 +31,10 @@ class RecordsCache:
         method again will overwrite the existing cache.
 
         Args:
+            cache_name (str): The name of the cache file to be created. Defaults to 'records'.
             pre_data (dict, optional): A dictionary of preloaded data to populate the cache. Defaults to None.
             timeout (int, optional): The timeout duration for cache entries in seconds. Defaults to 86400 (1 day).
-
+            cache_directory (str, optional): The directory to store the cache data. Defaults to 'cache'.
         Returns:
             Self: The current instance of the `RecordsCache` with the cache built.
 
@@ -47,6 +46,8 @@ class RecordsCache:
         # => True
         ```
         """
+        self.cache_record_path = os.path.join(cache_directory, f'{cache_name}.cache')
+        
         self.timeout: int | float = timeout if timeout > 0 else math.inf
         current_time = time.time()
         if pre_data:

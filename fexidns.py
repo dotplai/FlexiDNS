@@ -25,15 +25,16 @@ config.read('config.ini')
 
 # Identify enabled APIs
 enabled_apis = [_ for _ in config.sections() if _ and config.getboolean(_, "enabled", fallback=False)]
+looping_method = config.get("General", "loopingMethod", fallback="interval_time")
+if looping_method not in ["interval_time"]:
+    raise ValueError("loopingMethod must be either 'interval_time'.")
 interval_time = config.getint("General", "intervalTime", fallback=800) * 60
 
 global domain_type
 
-def initialize_api(section, cls):
+def initialize_api(section, cls) -> tuple[None, list] | tuple[any, dict[str, any | list]]:
     """Initialize API clients dynamically based on config."""
     if not section: return None, []
-    
-    domain_type = config.get(section, "domain_type")
     
     credentials = {
         "email": config.get(section, "email", fallback="").strip('",'),
@@ -44,25 +45,31 @@ def initialize_api(section, cls):
         "cache_persistent": config.getboolean(section, "cachePersistent", fallback="False")
     }
     
-    fqdn_raw = config.get(section, "FQDN", fallback="[]").strip('",')
-    fqdn_list = eval(fqdn_raw) if fqdn_raw.startswith("[") and fqdn_raw.endswith("]") else []
+    fqdns_ATC = config.get(section, "FQDNv4", fallback="[]").strip('",')
+    fqdn_A4TC = config.get(section, "FQDNv6", fallback="[]").strip('",')
+    fqdns_ATL = eval(fqdns_ATC) if fqdns_ATC.startswith("[") and fqdns_ATC.endswith("]") else []
+    fqdns_A4TL = eval(fqdn_A4TC) if fqdn_A4TC.startswith("[") and fqdn_A4TC.endswith("]") else []
     
-    return cls(**credentials,**cache), fqdn_list
+    return cls(**credentials,**cache), {'A': fqdns_ATL, 'AAAA': fqdns_A4TL}
 
 # Initialize APIs
-cloudflare_api, cloudflare_fqdns = initialize_api("CloudFlare", CloudFlare)
+cloudflare_api, cloudflare_fqdns  = initialize_api("CloudFlare", CloudFlare)
 
-async def integrateInstance(integrate: str, instance: any, fqdns: list[str], content: str):
+async def integrateInstance(integrate: str, instance: any, fqdns: list, content: str, domain_type: str) -> None:
     """Update DNS records for a given API."""
-    if not instance:
-        return
+    if not instance: return
     
     for fqdn in fqdns:
         try:
             __logger__.log(f"Updating record: {fqdn} -> {content}", temp_integrate=integrate)
-            if domain_type.__eq__('A'): instance.A(fqdn, content)
-            elif domain_type.__eq__('AAAA'): instance.AAAA(fqdn, content)
-            else: raise TypeError("Domain type now must contains with 'A' or 'AAAA'")
+            if domain_type == "A":
+                instance.A(fqdn, content)
+            elif domain_type == "AAAA":
+                instance.AAAA(fqdn, content)
+            else:
+                raise ValueError(f"Unsupported domain type: {domain_type}")
+
+            __logger__.log(f"Record updated successfully: {fqdn} -> {content}", temp_integrate=integrate)
         except Exception as e:
             LoggedException(e, api=integrate)
 
@@ -70,19 +77,26 @@ async def interval_loop() -> NoReturn:
     """Efficient periodic DNS update loop."""
     __logger__.verbose(f"Starting periodic DNS updates every {interval_time//60} minutes.")
     
+    cloudflare_fqdns_ATL = cloudflare_fqdns.get('A', [])
+    cloudflare_fqdns_A4TL = cloudflare_fqdns.get('AAAA', [])
+    
     while True:
         start_time = asyncio.get_event_loop().time()
         
         try:
-            ip_address: str = ipify(4 if domain_type.__eq__('A') else 6).get_address(format='json').json().get('ip', '')
-            if not ip_address:
-                __logger__.log(f"Public IPv{'4' if domain_type.__eq__('A') else '6'} not retrieved, skipping update", 30)
+            ipv4_address: str = ipify(4).get_address(format='json').json().get('ip', '')
+            ipv6_address: str = ipify(6).get_address(format='json').json().get('ip', '')
+            
+            if not (ipv4_address or ipv6_address):
+                __logger__.log(f"Public IPv4 and IPv6 not retrieved, skipping update", 30)
                 continue
             
             # Update all enabled APIs
-            await asyncio.gather(
-                integrateInstance("CloudFlare", cloudflare_api, cloudflare_fqdns, ip_address)
-            )
+            if looping_method == "interval_time":
+                await asyncio.gather(
+                    integrateInstance("CloudFlare", cloudflare_api, cloudflare_fqdns_ATL, ipv4_address, domain_type="A"),
+                    integrateInstance("CloudFlare", cloudflare_api, cloudflare_fqdns_A4TL, ipv6_address, domain_type="AAAA"),
+                )
         except Exception as e:
             LoggedException(e)
         
