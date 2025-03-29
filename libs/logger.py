@@ -1,11 +1,14 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+from typing import Self
 
 class LoggedException(Exception):
-    def __init__(self, message, api=None):
+    def __init__(self, api=None) -> Self:
         self.api = api
-        logger.exception(message, extra={"api": api})
+
+    def exception(self, message: any | Exception) -> None:
+        logger.exception(message, extra={"api": self.api})
         super().__init__(message)
 
 log_format = logging.Formatter(

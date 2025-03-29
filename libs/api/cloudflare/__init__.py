@@ -14,8 +14,9 @@ class Logger:
         logger.log(level=level, msg=message, extra={"api": temporary_integrate if temporary_integrate else self.integrate})
 
 class CloudFlare:
-    global integrate
     integrate = 'CloudFlare'
+    raised = LoggedException(integrate)
+
     
     def __init__(self: Self, email: str, password: str, cache_timeout: int = 86400, cache_persistent: bool = False):
         __logger__.__verbose__("Initializing CloudFlare API authorization...")
@@ -29,7 +30,7 @@ class CloudFlare:
         _ct = math.inf if cache_timeout.__le__(-1) else cache_timeout
         self.cache: Optional[type[RecordsCache]] = RecordsCache().build(timeout=_ct, cache_name='cloudflare_records') if _ct.__ne__(0) else None
         self.cache_persistent = cache_persistent
-        
+    
     def getZoneId(self: Self, domain: str) -> str:
         url = "https://api.cloudflare.com/client/v4/zones"
         __logger__.__verbose__(f"Fetching zone id for domain: {domain}")
@@ -38,14 +39,14 @@ class CloudFlare:
         data = response.json()
 
         if not response.ok:
-            LoggedException(ConnectionError(f"Error fetching zone id for domain '{domain}'. Response Code: {response.status_code}, Error: {response.text}"), integrate)
+            self.raised.exception(ConnectionError(f"Error fetching zone id for domain '{domain}'. Response Code: {response.status_code}, Error: {response.text}"), self.integrate)
 
         if data['success'] and data['result']:
             zone_id = data['result'][0]['id']
             __logger__.__verbose__(f"Zone ID retrieved for domain '{domain}': {zone_id}")
             return zone_id
         else:
-            LoggedException(ConnectionRefusedError("Domain not found or API call unsuccessful."), integrate)
+            self.raised.exception(ConnectionRefusedError("Domain not found or API call unsuccessful."), self.integrate)
 
     def getRecordId(self: Self, zone_id: str, record_name: str) -> str:
         url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records"
@@ -55,14 +56,14 @@ class CloudFlare:
         data = response.json()
 
         if not response.ok:
-            LoggedException(ConnectionError(f"Error fetching DNS record. Response Code: {response.status_code}, Error: {response.text}"), integrate)
+            self.raised(ConnectionError(f"Error fetching DNS record ID for '{record_name}'. Response Code: {response.status_code}, Error: {response.text}"), self.integrate)
 
         if data['success'] and data['result']:
             record_id = data['result'][0]['id']
             __logger__.__verbose__(f"DNS record ID retrieved for record '{record_name}': {record_id}")
             return record_id
         else:
-            LoggedException(ConnectionRefusedError("DNS record not found or API call unsuccessful."), integrate)
+            self.raised.exception(ConnectionRefusedError("DNS record not found or API call unsuccessful."), self.integrate)
 
     def getDNSRecord(self: Self, zone_id: str, filter: object = None) -> dict:
         url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records"
@@ -73,7 +74,7 @@ class CloudFlare:
         data = response.json()
 
         if not response.ok:
-            LoggedException(ConnectionError(f"Error fetching DNS records. Response Code: {response.status_code}, Error: {response.text}"), integrate)
+            self.raised.exception(ConnectionError(f"Error fetching DNS records. Response Code: {response.status_code}, Error: {response.text}"), self.integrate)
 
         __logger__.__verbose__(f"DNS records retrieved: {data['result']}")
         return data['result']
@@ -152,7 +153,7 @@ class CloudFlare:
         dns_record_id = self.getRecordId(zone_id, fqdn) if not cache else cache["dns_record_id"]
         old_record: dict = self.getDNSRecord(zone_id, {"name": fqdn})
         if not old_record:
-            LoggedException(KeyError(f"No domain name '{fqdn}' found in your DNS records. Please create it first."), integrate)
+            self.raised.exception(KeyError(f"No domain name '{fqdn}' found in your DNS records. Please create it first."), self.integrate)
 
         # Cache the retrieved ZoneID and DNSRecordID if caching is enabled
         self.__cmit(domain_type, zone_id, fqdn, dns_record_id)           
@@ -179,10 +180,10 @@ class CloudFlare:
 
         # Handle response errors
         if not response.ok:
-            LoggedException(ConnectionError(f"Error updating DNS record. Response Code: {response.status_code}, Error: {response.text}"), integrate)
+            self.raised.exception(ConnectionError(f"Error updating DNS record. Response Code: {response.status_code}, Error: {response.text}"), self.integrate)
 
         if not result.get("success", False):
-            LoggedException(ConnectionRefusedError(f"Failed to update content of '{fqdn}' to '{content}'. Errors: {result['errors']}"), integrate)
+            self.raised.exception(ConnectionRefusedError(f"Failed to update content of '{fqdn}' to '{content}'. Errors: {result['errors']}"), self.integrate)
 
         __logger__.__logging__(f"Successfully updated DNS record for '{fqdn}' with new content: {content}")
 
@@ -208,7 +209,7 @@ class CloudFlare:
         dns_record_id = self.getRecordId(zone_id, fqdn) if not cache else cache["dns_record_id"]
         old_record: dict = self.getDNSRecord(zone_id, {"name": fqdn})
         if not old_record:
-            LoggedException(KeyError(f"No domain name '{fqdn}' found in your DNS records. Please create it first."), integrate)
+            self.raised.exception(KeyError(f"No domain name '{fqdn}' found in your DNS records. Please create it first."), self.integrate)
 
         self.__cmit(domain_type, zone_id, fqdn, dns_record_id)
         
@@ -234,10 +235,10 @@ class CloudFlare:
 
         # Handle response errors
         if not response.ok:
-            LoggedException(ConnectionError(f"Error updating DNS record. Response Code: {response.status_code}, Error: {response.text}"), integrate)
+            self.raised.exception(ConnectionError(f"Error updating DNS record. Response Code: {response.status_code}, Error: {response.text}"), self.integrate)
 
         if not result.get("success", False):
-            LoggedException(ConnectionRefusedError(f"Failed to update content of '{fqdn}' to '{content}'. Errors: {result['errors']}"), integrate)
+            self.raised.exception(ConnectionRefusedError(f"Failed to update content of '{fqdn}' to '{content}'. Errors: {result['errors']}"), self.integrate)
 
         __logger__.__logging__(f"Successfully updated DNS record for '{fqdn}' with new content: {content}")
 

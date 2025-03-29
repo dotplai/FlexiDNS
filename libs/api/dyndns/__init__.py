@@ -18,6 +18,4 @@ class DynDNS:
         self.username = username
         self.password = password
         
-    def A(self: Self, fqdn: str, content: str): pass
-        
 __logger__ = Logger(DynDNS.integrate)
