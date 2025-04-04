@@ -12,7 +12,7 @@ from libs.api.noip import NoIP
 from libs.api.dyndns import DynDNS
 from libs.logger import logger, LoggedException
 
-from json import loads
+import json
 from ipaddress import ip_address
 
 class Logger:
@@ -21,11 +21,12 @@ class Logger:
 
     def set_integrate(self, integrate: str) -> Self:
         self.integrate = integrate
+        return self
     
-    def log(self, message: any, level: int | str = 20):
+    def log(self, message: any, level: int | str = 20) -> None:
         logger.log(level=level, msg=message, extra={"api": self.integrate})   
     
-    def verbose(self, message: any, level: int | str = 10):
+    def verbose(self, message: any, level: int | str = 10) -> None:
         logger.log(level=level, msg=message, extra={"api": self.integrate})
 __logger__ = Logger("FlexiDNS")
 
@@ -35,8 +36,6 @@ config.read('config.ini')
 
 # Identify enabled APIs
 enabled_apis = [_ for _ in config.sections() if _ and config.getboolean(_, "enabled", fallback=False)]
-looping_method = config.get("General", "loopingMethod", fallback="interval_time")
-interval_time = config.getint("General", "intervalTime", fallback=800) * 60
 
 def initialize_api(section: str, cls: any) -> tuple[any, dict[str, list]]:
     """Initialize API clients dynamically based on config."""
@@ -50,9 +49,8 @@ def initialize_api(section: str, cls: any) -> tuple[any, dict[str, list]]:
         "cache_timeout": config.getint(section, "cacheTimeout", fallback="172800"),
         "cache_persistent": config.getboolean(section, "cachePersistent", fallback="False")
     }
-    
-    FQDNObjects = loads(config.get(section, "FQDN"))
-    
+    FQDNObjects = json.loads(config.get(section, "FQDN").strip("',"))
+    print(FQDNObjects)
     return cls(**credentials,**cache), FQDNObjects
 
 # Initialize APIs
@@ -78,24 +76,48 @@ async def integrateInstance(integrate: str, instance: any, fqdns: list, content:
 class AsynchronousPeriodic:
     """Asynchronous loop for periodic tasks."""
     integrate = 'AsynchronousPeriodic'
-    Tintegrate = __logger__.set_integrate(integrate)
+    def __init__(self: Self) -> None:
+        __logger__.set_integrate(self.integrate)
 
-    @classmethod
-    async def intervaltime(cls, interval_time: int) -> NoReturn:
+    async def sync(self) -> None:
+        """Run the asynchronous loop."""
+        try:
+            Iaddress: list[str] = str(ipify(64).get_address(format='text')).split('or')
+            IAObjects: dict = {
+                "Iv4": Iaddress[0] if ip_address(Iaddress[0]).version == 4 else None,
+                "Iv6": Iaddress[1] if len(Iaddress) > 1 and ip_address(Iaddress[1]).version == 6 else None
+            }
+            print(IAObjects)
+            
+            if not (IAObjects["Iv4"] or IAObjects["Iv6"]):
+                return __logger__.log(f"Public IPv4 and IPv6 not retrieved, skipping update", 30)
+            
+            # Update all enabled APIs
+            tasks = []
+            if 'A' in CloudFlareFQDN and IAObjects['Iv4']:
+                tasks.append(integrateInstance("CloudFlare", CloudFlareAPI, CloudFlareFQDN['A'], IAObjects['Iv4']))
+            if 'AAAA' in CloudFlareFQDN and IAObjects["Iv6"]:
+                tasks.append(integrateInstance("CloudFlare", CloudFlareAPI, CloudFlareFQDN['AAAA'], IAObjects["Iv6"]))
+            
+            if tasks:
+                await asyncio.gather(*tasks)
+        except Exception as e:
+            LoggedException(self.integrate).exception(e)
+
+    async def intervaltime(self: Self, interval_time: int) -> NoReturn:
         """Periodic loop to update DNS records at specified intervals."""
-        cls.Tintegrate.log(f"Starting periodic DNS updates every {interval_time//60} minutes ({interval_time}s).")
+        __logger__.log(f"Starting periodic DNS updates every {interval_time//60} minutes ({interval_time}s).")
         
         while True:
             start_time = asyncio.get_event_loop().time()
-            await cls.update()
+            await self.sync()
             elapsed_time = asyncio.get_event_loop().time() - start_time
             sleep_time = max(0, interval_time - elapsed_time)
             __logger__.log(f"Cycle completed in {elapsed_time:.2f}s. Sleeping for {sleep_time:.2f}s.")
             await asyncio.sleep(sleep_time)
     
-    @classmethod
-    async def unix(cls, uinx_time: float | int) -> NoReturn:
-        cls.Tintegrate.log(f"Starting periodic DNS updates on unix time {uinx_time}.")
+    async def unix(self: Self, uinx_time: float | int) -> NoReturn:
+        self.Tintegrate.log(f"Starting periodic DNS updates on unix time {uinx_time}.")
 
         if uinx_time > 86_400: raise ValueError("Unix time must be less than 86,400 seconds (24 hours).")
 
@@ -106,49 +128,31 @@ class AsynchronousPeriodic:
             
             if now >= target_time: target_time += timedelta(days=1)
             time_to_wait = (target_time - now).total_seconds()
-            cls.Tintegrate.log(f"Waiting {time_to_wait} seconds until {target_time.ctime()}...")
+            self.Tintegrate.log(f"Waiting {time_to_wait} seconds until {target_time.ctime()}...")
             await asyncio.sleep(time_to_wait)
-            await cls.update()
-            cls.Tintegrate.log(f"Cycle completed. Sleeping until next scheduled time.")
+            await self.sync()
+            self.Tintegrate.log(f"Cycle completed. Sleeping until next scheduled time.")
 
-    @classmethod
-    async def update(cls) -> None:
-        """Run the asynchronous loop."""
-        try:
-            Iaddress: str = ipify(64).get_address(format='json').split('or')
-            IAObjects: dict = {
-                "Iv4": Iaddress[0] if ip_address(Iaddress[0]).version == 4 else None,
-                "Iv6": Iaddress[1] if len(Iaddress) > 1 and ip_address(Iaddress[1]).version == 6 else None
-            }
-            
-            if not Iaddress:
-                cls.Tintegrate.log(f"Public IPv4 and IPv6 not retrieved, skipping update", 30)
-                return
-            
-            # Update all enabled APIs
-            await asyncio.gather(
-                integrateInstance("CloudFlare", CloudFlareAPI, CloudFlareFQDN['A'], IAObjects['Iv4']), 
-                integrateInstance("CloudFlare", CloudFlareAPI, CloudFlareFQDN['AAAA'], IAObjects["Iv6"])
-            )
-        except Exception as e:
-            LoggedException(e)
 
 if __name__ == '__main__':
-    try:
-        if looping_method not in ["interval_time", "unix"]:
-            raise ValueError("loopingMethod must be either 'interval_time' or 'unix'.")
-        if looping_method == "interval_time":
-            interval_time = config.getint("General", "intervalTime", fallback=800) * 60
-            if interval_time > 86_400: raise ValueError("Interval time must be less than 86,400 seconds (24 hours).")
-            __logger__.log(f"Starting periodic DNS updates every {interval_time//60} minutes.")
-            asyncio.run(AsynchronousPeriodic.intervaltime(interval_time))
+    looping_method = config.get("General", "loopingMethod").strip('",')
 
-        elif looping_method == "unix":
-            unix_time = float(input("Enter the unix time (in seconds) for periodic updates: ")) if looping_method == "unix" else None
+    try:
+        if looping_method == "intervalTime":
+            interval_time = config.getint("General", "intervalTime", fallback=800) * 60
+            print(f"Default interval time is {interval_time//60} minutes.")
+            # IOintervalTime = int(input("Enter the interval time (in minute) for periodic updates: ") * 60)
+            
+            __logger__.log(f"Starting periodic DNS updates every {interval_time//60} minutes.")
+            asyncio.run(AsynchronousPeriodic().intervaltime(interval_time))
+
+        elif looping_method == "unixEpoch":
+            unix_time = float(input("Enter the unix time (in seconds) for periodic updates: "))
+            
             if unix_time > 86_400 and not unix_time: raise ValueError("Unix time must be less than 86,400 seconds (24 hours).")
-            asyncio.run(AsynchronousPeriodic.unix(unix_time))
-        else:
-            raise ValueError("Invalid looping method specified.")
+            asyncio.run(AsynchronousPeriodic().unix(unix_time))
+            
+        else: raise ValueError("loopingMethod must be either 'intervalTime' or 'unixEpoch'.")
     except KeyboardInterrupt as e:
         __logger__.log("KeyboardInterrupt detected. Exiting...", level=10)
         sys.exit(0)

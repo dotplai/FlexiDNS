@@ -15,10 +15,9 @@ class Logger:
 
 class CloudFlare:
     integrate = 'CloudFlare'
-    raised = LoggedException(integrate)
-
     
     def __init__(self: Self, email: str, password: str, cache_timeout: int = 86400, cache_persistent: bool = False):
+        raised = LoggedException(self.integrate)
         __logger__.__verbose__("Initializing CloudFlare API authorization...")
         
         self.headers = {
@@ -28,7 +27,7 @@ class CloudFlare:
         }
         
         _ct = math.inf if cache_timeout.__le__(-1) else cache_timeout
-        self.cache: Optional[type[RecordsCache]] = RecordsCache().build(timeout=_ct, cache_name='cloudflare_records') if _ct.__ne__(0) else None
+        self.cache: Optional[type[RecordsCache]] = RecordsCache().build('cloudflare_records', timeout=_ct) if _ct.__ne__(0) else None
         self.cache_persistent = cache_persistent
     
     def getZoneId(self: Self, domain: str) -> str:
@@ -95,7 +94,7 @@ class CloudFlare:
             else:
                 self.cache.__poke__()
 
-    def __part_components__(fqdn: str) -> dict["TLD": str, "DN": str | None, "SDN": str | None]:
+    def __part_components__(self: Self, fqdn: str) -> dict["TLD": str, "DN": str | None, "SDN": str | None]:
         parts = fqdn.split('.')
         return {
             "TLD": parts[-1],
@@ -103,7 +102,7 @@ class CloudFlare:
             "SDN": ".".join(parts[:-2]) if len(parts) > 2 else None
         }
         
-    def __cmit(self, domain_type: str, zone_id: str, fqdn: str, dns_record_id: str) -> None:
+    def __cmit(self: Self, domain_type: str, zone_id: str, fqdn: str, dns_record_id: str) -> None:
         # Cache the retrieved ZoneID and DNSRecordID if caching is enabled
         if not self.cache: return
         

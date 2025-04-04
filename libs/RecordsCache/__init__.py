@@ -6,7 +6,7 @@ import os
 import time
 
 class RecordsCache:
-    def __init__() -> None:
+    def __init__(self) -> None:
         """
         Initializes a RecordsCache instance with a specified cache directory.
 
@@ -46,6 +46,7 @@ class RecordsCache:
         # => True
         ```
         """
+        os.makedirs(cache_directory, exist_ok=True)
         self.cache_record_path = os.path.join(cache_directory, f'{cache_name}.cache')
         
         self.timeout: int | float = timeout if timeout > 0 else math.inf

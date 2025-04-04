@@ -1,13 +1,13 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-from typing import Self
+from typing import Self, Union
 
 class LoggedException(Exception):
     def __init__(self, api=None) -> Self:
         self.api = api
 
-    def exception(self, message: any | Exception) -> None:
+    def exception(self, message: Union[any, Exception]) -> None:
         logger.exception(message, extra={"api": self.api})
         super().__init__(message)
 
