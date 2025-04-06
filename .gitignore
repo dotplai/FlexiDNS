@@ -8,6 +8,7 @@ __pycache__/
 /dev/
 /logs/
 /cache/
+/tests/
 
 # configure file
 config.ini

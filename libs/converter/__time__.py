@@ -1,7 +1,6 @@
-def unixConvert(seconds: float) -> tuple[int, int, int, int]:
-    milliseconds = seconds * 1000
+def unixConvert(seconds: float) -> list[int, int, int]:
     remaining_minutes = int((seconds % 3600) // 60)
-    remaining_seconds = seconds % 60
+    remaining_seconds = int(seconds % 60)
     hours = int(seconds // 3600)
 
-    return milliseconds, remaining_seconds, remaining_minutes, hours
+    return [remaining_seconds, remaining_minutes, hours]

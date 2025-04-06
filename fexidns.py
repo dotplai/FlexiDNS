@@ -77,7 +77,7 @@ class AsynchronousPeriodic:
     """Asynchronous loop for periodic tasks."""
     integrate = 'AsynchronousPeriodic'
     def __init__(self: Self) -> None:
-        __logger__.set_integrate(self.integrate)
+        self.syncLogger = __logger__.set_integrate(self.integrate)
 
     async def sync(self) -> None:
         """Run the asynchronous loop."""
@@ -90,7 +90,7 @@ class AsynchronousPeriodic:
             print(IAObjects)
             
             if not (IAObjects["Iv4"] or IAObjects["Iv6"]):
-                return __logger__.log(f"Public IPv4 and IPv6 not retrieved, skipping update", 30)
+                return self.syncLogger.log(f"Public IPv4 and IPv6 not retrieved, skipping update", 30)
             
             # Update all enabled APIs
             tasks = []
@@ -106,32 +106,32 @@ class AsynchronousPeriodic:
 
     async def intervaltime(self: Self, interval_time: int) -> NoReturn:
         """Periodic loop to update DNS records at specified intervals."""
-        __logger__.log(f"Starting periodic DNS updates every {interval_time//60} minutes ({interval_time}s).")
+        self.syncLogger.log(f"Starting periodic DNS updates every {interval_time//60} minutes ({interval_time}s).")
         
         while True:
             start_time = asyncio.get_event_loop().time()
             await self.sync()
             elapsed_time = asyncio.get_event_loop().time() - start_time
             sleep_time = max(0, interval_time - elapsed_time)
-            __logger__.log(f"Cycle completed in {elapsed_time:.2f}s. Sleeping for {sleep_time:.2f}s.")
+            self.syncLogger.log(f"Cycle completed in {elapsed_time:.2f}s. Sleeping for {sleep_time:.2f}s.")
             await asyncio.sleep(sleep_time)
     
     async def unix(self: Self, uinx_time: float | int) -> NoReturn:
-        self.Tintegrate.log(f"Starting periodic DNS updates on unix time {uinx_time}.")
+        self.syncLogger.log(f"Starting periodic DNS updates on unix time {uinx_time}.")
 
         if uinx_time > 86_400: raise ValueError("Unix time must be less than 86,400 seconds (24 hours).")
 
         while True:
             now = datetime.now()
             uinxTime = unixConvert(uinx_time)
-            target_time = now.replace(hour=uinxTime[3], minute=uinxTime[2], second=uinxTime[1], microsecond=uinxTime[0])
+            target_time = now.replace(hour=uinxTime[2], minute=uinxTime[1], second=uinxTime[0], microsecond=0)
             
             if now >= target_time: target_time += timedelta(days=1)
             time_to_wait = (target_time - now).total_seconds()
-            self.Tintegrate.log(f"Waiting {time_to_wait} seconds until {target_time.ctime()}...")
+            self.syncLogger.log(f"Waiting {time_to_wait} seconds until {target_time.ctime()}...")
             await asyncio.sleep(time_to_wait)
             await self.sync()
-            self.Tintegrate.log(f"Cycle completed. Sleeping until next scheduled time.")
+            self.syncLogger.log(f"Cycle completed. Sleeping until next scheduled time.")
 
 
 if __name__ == '__main__':
