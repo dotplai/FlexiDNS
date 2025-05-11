@@ -47,7 +47,7 @@ fi
 
 # run the application
 echo "Starting the application..."
-python3 fexidns.py
+python3 flexidns.py
 deactivate
 
 exit

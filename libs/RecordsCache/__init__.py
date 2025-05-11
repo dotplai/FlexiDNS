@@ -440,7 +440,7 @@ class RecordsCache:
         
         return key in self.cache_data
      
-    def __poke__(self) -> None:
+    def poke(self) -> None:
         """ Clean up expired cache entries.
         
         Iterates through the cache data and removes any entries
@@ -463,7 +463,7 @@ class RecordsCache:
             )
         
         # After 60 seconds passing...
-        cache.__poke__()
+        cache.poke()
         print(cache.get())
         # => {"key_113": {...,"expiry_time": 290}}
         ```

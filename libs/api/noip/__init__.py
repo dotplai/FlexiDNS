@@ -1,15 +1,7 @@
 import json
 from typing import Literal, Self, TypeAlias
 import requests
-from libs.logger import LoggedException, logger
-
-class Logger:
-    def __init__(self, integrate: str):
-        self.integrate = integrate
-    def __logging__(self, message: any, level: int | str = 20, temporary_integrate: str = None):
-        logger.log(level=level, msg=message, extra={"api": temporary_integrate if temporary_integrate else self.integrate})   
-    def __verbose__(self, message: any, level: int | str = 10,  temporary_integrate: str = None):
-        logger.log(level=level, msg=message, extra={"api": temporary_integrate if temporary_integrate else self.integrate})
+from libs.logging import Logger
 
 class NoIP:
     integrate = 'NoIP'
@@ -29,7 +21,7 @@ class NoIP:
         Returns:
             dict: The response from the NoIP API.
         """
-        url = f"https://dynupdate.no-ip.com/nic/update"
+        url = "https://dynupdate.no-ip.com/nic/update"
         params = {
             "hostname": fqdn,
             "myip": content
@@ -37,10 +29,10 @@ class NoIP:
         try:
             response = requests.get(url, params=params, auth=(self.username, self.password))
             response.raise_for_status()
-            __logger__.__logging__(f"Updated hostname '{fqdn}' to IP '{content}' successfully.", level=20)
+            logger.__logging__(f"Updated hostname '{fqdn}' to IP '{content}' successfully.", level=20)
             return {"status": "success", "response": response.text}
         except requests.exceptions.RequestException as e:
-            __logger__.__logging__(f"Failed to update hostname '{fqdn}': {str(e)}", level=40)
-            raise LoggedException(f"Error updating NoIP record: {str(e)}")
+            logger.__logging__(f"Failed to update hostname '{fqdn}': {str(e)}", level=40)
+            raise logger.exception(f"Error updating NoIP record: {str(e)}")
         
-__logger__ = Logger(NoIP.integrate)
+logger = Logger(NoIP.integrate)

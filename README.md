@@ -2,7 +2,6 @@
 
 FlexiDNS is a flexible and dynamic IP resolver and DNS updater designed for seamless network management. The application supports multiple APIs, cache persistence, and future IPv6 compatibility, making it ideal for personal or professional use.
 
-<!-- > This version can use with linux and unix based only. looking for windows? [here](https://github.com/dotplai/FlexiDNS/tree/0f4bd798bce14119263ddcb711e5d79b50dc361c). -->
 > This version contains [services file](/services/readme.md).
 
 ## Features

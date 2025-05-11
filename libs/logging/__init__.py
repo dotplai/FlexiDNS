@@ -3,13 +3,24 @@ from logging.handlers import RotatingFileHandler
 import os
 from typing import Self, Union
 
-class LoggedException(Exception):
-    def __init__(self, api=None) -> Self:
-        self.api = api
+class Logger:
+    def __init__(self, integrate: str):
+        self.integrate = integrate
+
+    def set_integrate(self, integrate: str) -> Self:
+        self.integrate = integrate
+        return self
+    
+    def log(self, message: any, level: int | str = 20) -> None:
+        logger.log(level=level, msg=message, extra={"api": self.integrate})
+
+    def verbose(self, message: any, level: int | str = 10) -> None:
+        logger.log(level=level, msg=message, extra={"api": self.integrate})
 
     def exception(self, message: Union[any, Exception]) -> None:
-        logger.exception(message, extra={"api": self.api})
+        logger.exception(message, extra={"api": self.integrate})
         super().__init__(message)
+
 
 logger = logging.getLogger("FlexiDNS")
 logger.setLevel(logging.DEBUG)
