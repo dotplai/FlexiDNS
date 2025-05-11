@@ -47,7 +47,7 @@ fi
 
 # run the application
 echo "Starting the application..."
-python3 flexidns.py
+python3 flexidns.py $(grep -v '^#' flags.txt)
 deactivate
 
 exit

@@ -1,0 +1,10 @@
+# Argument flags setup
+
+# Example multi-line:
+# -m unix
+# -t 700
+
+# Example single-line:
+# -m unix -t 700
+
+# Uncomment it for using argument flags.
