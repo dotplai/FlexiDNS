@@ -1,0 +1,16 @@
+# default ignores
+__pycache__/
+**/__pycache__/
+/.venv/
+**/.venv/
+
+# primary directory & files & extensions
+/dev/
+/logs/
+/cache/
+/tests/
+
+# Configures & Services file
+config.ini
+!templates/*
+**/*.service

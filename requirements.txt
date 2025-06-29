@@ -1,0 +1,6 @@
+# python test/inspect modules
+pytest
+
+# required modules
+requests
+python-dotenv
