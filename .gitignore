@@ -9,6 +9,7 @@ __pycache__/
 /logs/
 /cache/
 /tests/
+/dumps/
 
 # Configures & Services file
 config.ini

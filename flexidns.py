@@ -9,7 +9,7 @@ from typing import NoReturn, Self, Union, Any
 from libs.logging import Logger
 from libs.converter import unixConvert
 
-from libs.api.ipify import ipify
+from libs.api.FetchAPI import ipify, ifconfig
 from libs.api.cloudflare import CloudFlare
 from libs.api.noip import NoIP
 from libs.api.dyndns import DynDNS
@@ -23,6 +23,7 @@ logger = Logger("FlexiDNS")
 # Load configuration
 config = configparser.ConfigParser(allow_no_value=True, default_section='General')
 config.read('config.ini')
+queryAPI = config.get('General', 'queryAPI', fallback='ipify').strip('",')
 
 def initialize_api() -> tuple[dict[str, Any], dict[str, dict[str, list[str]]]]:
     apis: dict[str, Any] = {}
@@ -75,7 +76,20 @@ class AsynchronousPeriodic:
     async def sync(self: Self) -> None:
         """Run the asynchronous loop.""" 
         try:
-            inet_address: list[str] = str(ipify(64).get_address(format='text')).split('or')
+            # Retrieve public IP addresses using the configured API
+            if queryAPI == 'ipify':
+                inet_address = ipify(64).get_address(format='text').split('or')
+            elif queryAPI.split('?')[0] == 'ifconfig':
+                ifinfo = ifconfig(queryAPI.split('?')[-1] if '?' in queryAPI else '/').get()
+                if not isinstance(ifinfo, dict or Any):
+                    ip_addr = ifinfo.get('ip_addr', None)
+                else:
+                    ip_addr = ifinfo
+                # Support both single IP and comma-separated list
+                inet_address = [ip.strip() for ip in ip_addr.split(',')] if ',' in ip_addr else [ip_addr]
+            else:
+                raise ValueError(f"Unsupported queryAPI: {queryAPI}. Supported APIs are 'ipify' and 'ifconfig'.")
+            
             inet_address_object: dict = {
                 "Iv4": inet_address[0] if ip_address(inet_address[0]).version == 4 else None,
                 "Iv6": inet_address[1] if len(inet_address) > 1 and ip_address(inet_address[1]).version == 6 else None
