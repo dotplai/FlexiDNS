@@ -2,7 +2,7 @@ import json
 import os
 import requests
 from datetime import datetime
-from typing import Union, Optional
+from typing import Any, Union, Optional
 
 # This module provides a simple interface to fetch public IP address and other network information from ifconfig.me ----- ifconfig.me
 class ifconfig:
@@ -24,7 +24,7 @@ class ifconfig:
         ifinfo = res.json() if format in ('json', 'jsonp') else res.text
         if format in ('json', 'jsonp'):
             os.makedirs(self.dumps, exist_ok=True)  # Ensure directory exists
-            with open(f"{self.dumps}ifconfig@{datetime().strftime("%d-%m-%Y:%H-%M-%S")}.jsonc", "w") as f:
+            with open(f"{self.dumps}ifconfig@{datetime.now().strftime('%d-%m-%Y:%H-%M-%S')}.jsonc", "w") as f:
                 json.dump(ifinfo, f, indent=4)
 
             print("✅ Dumped response to 'ifconfig.jsonc'")
@@ -36,7 +36,7 @@ class ipify:
     def __init__(self, internet_protocol_verison: int = 4):
         self.api_uri = f'https://api{internet_protocol_verison}.ipify.org'
           
-    def get_address(self, format: str = 'json', callback: str = None) -> Union[dict, str, any, requests.Response]:
+    def get_address(self, format: str = 'json', callback: Optional[str] = None) -> Union[dict, str, Any, requests.Response]:
         __address__ = (
             f"{self.api_uri}"
             f"{'?format=' + format if format else ''}"
@@ -51,7 +51,7 @@ class ipify:
         return res.json if format in ('json' or 'jsonp') else res.text
 
     @staticmethod
-    def get_ipv4(format: str = 'json', callback: str = None) -> Union[dict, str, any, requests.Response]:
+    def get_ipv4(format: str = 'json', callback: Optional[str] = None) -> Union[dict, str, Any, requests.Response]:
         __address__ = (
             "https://api4.ipify.org"
             f"{'?format=' + format if format else ''}"
@@ -65,7 +65,7 @@ class ipify:
         return res.json if format in ('json' or 'jsonp') else res.text
     
     @staticmethod
-    def get_ipv6(format: str = 'json', callback: str = None) -> Union[dict, str, any, requests.Response]:
+    def get_ipv6(format: str = 'json', callback: Optional[str] = None) -> Union[dict, str, Any, requests.Response]:
         __address__ = (
             "https://api6.ipify.org"
             f"{'?format=' + format if format else ''}"
@@ -79,7 +79,7 @@ class ipify:
         return res.json if format in ('json' or 'jsonp') else res.text
     
     @staticmethod
-    def get_ipv64(format: str = 'json', callback: str = None) -> Union[dict, str, any, requests.Response]:
+    def get_ipv64(format: str = 'json', callback: Optional[str] = None) -> Union[dict, str, Any, requests.Response]:
         __address__ = (
             "https://api64.ipify.org"
             f"{'?format=' + format if format else ''}"
