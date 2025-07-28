@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Any, Optional, Self
 
 import json
 import math
@@ -23,7 +23,7 @@ class RecordsCache:
         ```
         """
         
-    def build(self, cache_name: str = 'records', pre_data: dict = None, timeout: int = 86400, cache_directory: str = 'cache') -> Self:
+    def build(self, cache_name: str = 'records', pre_data: Optional[Any] = None, timeout: int = 86400, cache_directory: str = '.cache') -> Self:
         """
         Builds a new cache instance with optional preloaded data and a timeout.
 
@@ -57,7 +57,7 @@ class RecordsCache:
         self.cache_data = pre_data if pre_data else {}
         return self
     
-    def update(self, update_data: dict, key: str = None) -> None:
+    def update(self, update_data: dict, key: Optional[str] = None) -> None:
         """
         Updates existing cache data with new data.
 
@@ -89,7 +89,7 @@ class RecordsCache:
         else:
             self.cache_data[key] = update_data
         
-    def get(self, key: str = None) -> dict | None:
+    def get(self, key: Optional[str] = None) -> dict | None:
         """
         Retrieves the cached data if it's still valid. Returns `None` if expired or empty.
 

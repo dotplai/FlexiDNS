@@ -1,6 +1,7 @@
 import configparser
 from datetime import date, datetime, timedelta
 import math
+import os
 import sys
 import asyncio
 import re
@@ -9,7 +10,7 @@ from typing import NoReturn, Optional, Self, Union, Any
 from libs.logging import Logger
 from libs.converter import unixConvert
 
-from libs.api.FetchAPI import ipify, ifconfig
+from libs.api.FetchAPI import icanhazip, ipify, ifconfig
 from libs.api.cloudflare import CloudFlare
 from libs.api.noip import NoIP
 from libs.api.dyndns import DynDNS
@@ -105,7 +106,11 @@ class AsynchronousPeriodic:
                         inet_address = [ipify_response]
                     else:
                         raise ValueError("Unexpected response type from ipify API")
+                    
+                elif queryAPI == 'icanhazip':
+                    inet_address = [icanhazip().get().replace('\n', '').strip()]
                 elif queryAPI.split('?')[0] == 'ifconfig':
+
                     ifinfo = ifconfig(queryAPI.split('?')[-1] if '?' in queryAPI else '/').get()
                     if isinstance(ifinfo, dict):
                         ip_addr = ifinfo.get('ip_addr', None)
@@ -117,9 +122,9 @@ class AsynchronousPeriodic:
                     else:
                         inet_address = []
                 else:
-                    raise ValueError(f"Unsupported queryAPI: {queryAPI}. Supported APIs are 'ipify' and 'ifconfig'.")
+                    raise ValueError(f"Unsupported queryAPI: {queryAPI}. Supported APIs are 'ipify', 'icanzip' and 'ifconfig'.")
                 
-                inet_address_object: dict = {
+                inet_address_object: dict[str, Any] = {
                     "Iv4": inet_address[0] if inet_address and ip_address(inet_address[0]).version == 4 else None,
                     "Iv6": inet_address[1] if len(inet_address) > 1 and ip_address(inet_address[1]).version == 6 else None
                 }
@@ -128,6 +133,19 @@ class AsynchronousPeriodic:
                     self.sync_logger.log("Public IPv4 and IPv6 not retrieved, skipping update", 30)
                     return total_seconds or 0
                 
+                os.makedirs('.dumps', exist_ok=True)
+                if os.path.exists('.dumps/found_address'):
+                    with open('.dumps/found_address', 'r') as f:
+                        found_address: dict[str, Any] = json.load(f)
+                        if found_address == inet_address_object:
+                            self.sync_logger.log("No change in public IP address, skipping update", 20)
+                            return total_seconds or 0
+                        f.close()
+                else:
+                    with open('.dumps/found_address', 'x') as f:
+                        json.dump(inet_address_object, f, indent=4)
+                        f.close()
+
                 # Update all enabled APIs
                 tasks = []
                 for object_name in APIs:
@@ -197,9 +215,7 @@ if __name__ == '__main__':
     if args.mode == 'prefer' and args.synctime is not None:
         parser.error("--synctime (-t) is not allowed when --mode (-m) is 'prefer'")
 
-    mode = args.mode or (config.get("General", "mode").strip('",') if config.get("General", "mode") == 'prefer' else "serviceSync")
-    if mode not in ["unix", "interval", "prefer", "serviceSync"]:
-        raise ValueError("mode must be either 'unix', 'interval', 'prefer', or 'serviceSync'.")
+    mode = args.mode or config.get("General", "mode").strip('",')
     
     syncTime = math.nan if args.mode in ['prefer'] else args.synctime if args.synctime else config.getint("General", "syncTime", fallback=36000)
     try:    
@@ -210,11 +226,11 @@ if __name__ == '__main__':
             if syncTime > 86_400 and not syncTime: raise ValueError("Unix time must be less than 86,400 seconds (24 hours).")
             rtime = unixConvert(syncTime)
             asyncio.run(AsynchronousPeriodic().unix(syncTime))
-        elif mode in ['prefer', 'serviceSync']:
+        elif args.mode in ['prefer']:
             asyncio.run(AsynchronousPeriodic().sync())
             logger.log("Preferred one-time sync completed.")
 
-        else: raise ValueError("mode must be either 'intervalTime' or 'unixEpoch' or 'serviceSync'.")
+        else: raise ValueError("mode must be either 'intervalTime' or 'unixEpoch'.")
 
         logger.log(">>====<< Execution completed >>====<<", level=10)
     except KeyboardInterrupt as e:

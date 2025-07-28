@@ -91,3 +91,16 @@ class ipify:
         if not res.ok:
             raise ConnectionError(f"Response error: {res.status_code} - {res.reason}")
         return res.json if format in ('json' or 'jsonp') else res.text
+
+class icanhazip:
+    def __init__(self):
+        self.api_uri = f'https://icanhazip.com'
+    
+    def get(self) -> str:
+        """Fetch public IP address from icanhazip.com"""
+        res = requests.get(self.api_uri)
+        res.raise_for_status()
+        if not res.ok:
+            raise ConnectionError(f"Response error: {res.status_code} - {res.reason}")
+        
+        return res.text
