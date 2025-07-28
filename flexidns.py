@@ -38,10 +38,10 @@ config = configparser.ConfigParser(allow_no_value=True, default_section='General
 config.read('config.ini')
 queryAPI = config.get('General', 'queryAPI', fallback='ipify').strip('",')
 
-learningBehaviors = {
-    option: [parse(v) for v in config.get('learningBehavior', option, fallback='').strip('",[] ').replace(' ', '').split(',')]
-    for option in config.options('learningBehavior')
-    if option != 'enabled' and config.get('learningBehavior', option, fallback='').strip('",[] ').startswith('True')
+LearningBehaviors = {
+    option: [parse(v) for v in config.get('LearningBehavior', option, fallback='').strip('",[] ').replace(' ', '').split(',')]
+    for option in config.options('LearningBehavior')
+    if option != 'enabled' and config.get('LearningBehavior', option, fallback='').strip('",[] ').startswith('True')
 }
 
 def initialize_api() -> tuple[dict[str, Any], dict[str, dict[str, list[str]]]]:
@@ -73,7 +73,7 @@ APIs, ObjectFQDNs = initialize_api()
 
 async def call(instance: Any, fqdns: list[str], content: str) -> None:
     """Update DNS records for a given API."""
-    sync_logger = logger.set_integrate(instance.__class__.__name__)
+    sync_logger = Logger(instance.__class__.__name__)
     if not instance: return
     
     for fqdn in fqdns:
@@ -87,12 +87,12 @@ class AsynchronousPeriodic:
     """Asynchronous loop for periodic tasks."""
     integrate = 'AsynchronousPeriodic'
     def __init__(self: Self) -> None:
-        self.sync_logger = logger.set_integrate(self.integrate)
+        self.sync_logger = Logger(self.integrate)
 
     async def sync(self: Self) -> int:
         """Run the asynchronous loop with exponential backoff on error."""
         total_seconds: int = 0
-        timeshift = learningBehaviors.get('timeshift')
+        timeshift = LearningBehaviors.get('timeshift')
         
         while True:
             try:
@@ -187,17 +187,22 @@ class AsynchronousPeriodic:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="FlexiDNS Dynamic Updater")
-    parser.add_argument("-m", "--mode", type=str, choices=["unix", "interval", "prefer"], help="Looping method: 'unix' or 'interval'")
+    parser.add_argument("-m", "--mode", type=str, choices=["unix", "interval", "prefer"], help="The mode of operation for the updater. 'unix' for Unix epoch time, 'interval' for periodic updates, 'prefer' for one-time sync.")
     parser.add_argument("-t", "--synctime", type=int, help="The sync time specifies the time between each loop check and update.")
     args = parser.parse_args()
     
     # Conditional validation
     if args.mode in ["unix", "interval"] and args.synctime is None:
-        parser.error(f"--synctime (-t) is required when --mode is '{args.mode}'")
+        parser.error(f"--synctime (-t) is required when --mode (-m) is '{args.mode}'")
+    if args.mode == 'prefer' and args.synctime is not None:
+        parser.error("--synctime (-t) is not allowed when --mode (-m) is 'prefer'")
 
-    mode = args.mode or config.get("General", "mode").strip('",')
+    mode = args.mode or (config.get("General", "mode").strip('",') if config.get("General", "mode") == 'prefer' else "serviceSync")
+    if mode not in ["unix", "interval", "prefer", "serviceSync"]:
+        raise ValueError("mode must be either 'unix', 'interval', 'prefer', or 'serviceSync'.")
+    
     syncTime = math.nan if args.mode in ['prefer'] else args.synctime if args.synctime else config.getint("General", "syncTime", fallback=36000)
-    try:
+    try:    
         logger.log(f">>====<< {re.sub(r'(?<!^)(?=[A-Z])', ' ', mode).title()} execute >>====<<")
         if mode in ["intervalTime", "interval"]:
             asyncio.run(AsynchronousPeriodic().interval(syncTime))
@@ -205,12 +210,13 @@ if __name__ == '__main__':
             if syncTime > 86_400 and not syncTime: raise ValueError("Unix time must be less than 86,400 seconds (24 hours).")
             rtime = unixConvert(syncTime)
             asyncio.run(AsynchronousPeriodic().unix(syncTime))
-        elif args.mode in ['prefer']:
+        elif mode in ['prefer', 'serviceSync']:
             asyncio.run(AsynchronousPeriodic().sync())
             logger.log("Preferred one-time sync completed.")
-            sys.exit(0)
 
-        else: raise ValueError("mode must be either 'intervalTime' or 'unixEpoch'.")
+        else: raise ValueError("mode must be either 'intervalTime' or 'unixEpoch' or 'serviceSync'.")
+
+        logger.log(">>====<< Execution completed >>====<<", level=10)
     except KeyboardInterrupt as e:
         logger.log("KeyboardInterrupt detected. Exiting...", level=10)
         sys.exit(0)

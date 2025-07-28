@@ -11,7 +11,7 @@ for file in "$TEMPLATE_DIR"/*; do
     filename=$(basename "$file")
 
     if [ ! -e "$BASE_PROJECT_DIR/$filename" ]; then
-        echo "Resorce '$filename' is missing - copying..."
+        echo "Resource '$filename' is missing - copying..."
         cp "$file" "$BASE_PROJECT_DIR"
         missing=true
     fi

@@ -4,7 +4,7 @@ echo "🔧 Installing FlexiDNS systemd service..."
 
 SYSTEMD_DIR="/etc/systemd/system/"
 LOCAL_DIR="$(pwd)/services/"
-SERVICE_NAME="flexidns.service"
+SERVICE_NAME="FlexiDns.service"
 SERVICE_EXEC="rxt.sh"
 TEMP_SERVICE="${LOCAL_DIR}${SERVICE_NAME}"
 DEFAULT_USER="$USER"
@@ -32,8 +32,10 @@ fi
 if [[ "$OVERWRITE" =~ ^[Yy]$ ]]; then
     cat <<EOF > "$TEMP_SERVICE"
 [Unit]
-Description=FlexiDNS Service
-After=network.target
+Description=FlexiDNS WAN Resolver Service
+Documentation=
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
@@ -52,7 +54,7 @@ echo "----- start of service file -----"
 cat "$TEMP_SERVICE"
 echo "-----  end of service file  -----"
 
-read -p "➡️  Press Enter to continue installing..."
+read -p "➡️ Press Enter to continue installing..."
 
 # Install and activate the service
 for SERVICE_FILE in "$LOCAL_DIR"*.service; do
