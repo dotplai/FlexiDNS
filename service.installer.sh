@@ -65,9 +65,9 @@ for SERVICE_FILE in "$LOCAL_DIR"*.service; do
         echo "🟡 $BASENAME already exists in systemd."
 
         # Reinstall confirmation
-        read -p "Do you want to reinstall it? (y/n): " REINSTALL
-        case "$REINSTALL" in
-            [Yy])
+        read -p "Uninstall or reinstall or nothing? (u/r/n): " ACTION
+        case "$ACTION" in
+            [Rr])
                 sudo cp "$SERVICE_FILE" "$TARGET_PATH"
                 sudo systemctl daemon-reload
                 sudo systemctl enable "$BASENAME"
@@ -75,10 +75,18 @@ for SERVICE_FILE in "$LOCAL_DIR"*.service; do
 
                 echo "✅ Reinstalled and restarted: $BASENAME"
                 ;;
+            [Uu])
+                sudo systemctl stop "$BASENAME"
+                sudo systemctl disable "$BASENAME"
+                sudo rm "$TARGET_PATH"
+                sudo systemctl daemon-reload
+
+                echo "✅ Uninstalled: $BASENAME"
+                ;;
             [Nn])
                 ;;
             *)
-                echo "❌ Invalid input. Please enter 'y' or 'n'."
+                echo "❌ Invalid input. Please enter 'u' or 'r' or 'n'."
                 exit 1
                 ;;
         esac
