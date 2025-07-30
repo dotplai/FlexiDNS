@@ -45,7 +45,7 @@ def init_logging():
     log_include = config.get('Logging', 'logIncluded').strip('",[] ').replace(' ', '').split(',')
     console_include = config.get('Logging', 'consoleIncluded').strip('",[] ').replace(' ', '').split(',')
 
-    logger = logging.getLogger("FlexiDNS")
+    logger = logging.getLogger("UDIP")
     logger.setLevel(logging.DEBUG)
 
     log_format = logging.Formatter(
@@ -69,11 +69,11 @@ def init_logging():
         log_directory = 'logs'
         os.makedirs(log_directory, exist_ok=True)
         
-        if config.getboolean('Logging', 'splitLogs', fallback=True):
+        if config.getboolean('Logging', 'splitLog', fallback=True):
             for level_name, level in level_map.items():
                 if level_name in log_include:
                     handler = RotatingFileHandler(
-                        os.path.join(log_directory, f'flexidns.{level_name}.log') if level_name != 'normal' else os.path.join(log_directory, 'flexidns.log'),
+                        os.path.join(log_directory, f'udip.{level_name}.log') if level_name != 'normal' else os.path.join(log_directory, 'udip.log'),
 
                         maxBytes=5 * 1024 * 1024,
                         backupCount=5
@@ -83,7 +83,7 @@ def init_logging():
                     logger.addHandler(handler)
         else:
             base_handler = RotatingFileHandler(
-                os.path.join(log_directory, 'flexidns.log'),
+                os.path.join(log_directory, 'udip.log'),
                 maxBytes=5 * 1024 * 1024,
                 backupCount=5
             )

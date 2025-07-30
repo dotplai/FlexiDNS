@@ -19,7 +19,7 @@ import json
 from ipaddress import ip_address
 import argparse
 
-logger = Logger("FlexiDNS")
+logger = Logger("UDIP")
 
 def parse(val) -> Union[bool, int, float, str, Any]:
     val = val.strip()
@@ -190,7 +190,7 @@ class AsynchronousPeriodic:
 
     async def unix(self: Self, unix_time: float | int) -> NoReturn:
         unixl = unixConvert(unix_time)
-        self.sync_logger.log(f"Starting periodic DNS updates at {unixl[2]:02d}:{unixl[1]:02d}:{unixl[0]:02d} (24hr) each day.")
+        self.sync_logger.log(f"Starting periodic DNS updates at {unixl[2]:02d}:{unixl[1]:02d}:{unixl[0]:02d}. each 24 hours.")
         
         while True:
             now = datetime.now()
@@ -204,7 +204,7 @@ class AsynchronousPeriodic:
             self.sync_logger.log("Cycle completed. Sleeping until next scheduled time.")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="FlexiDNS Dynamic Updater")
+    parser = argparse.ArgumentParser(description="UDIP Dynamic Updater")
     parser.add_argument("-m", "--mode", type=str, choices=["unix", "interval", "prefer"], help="The mode of operation for the updater. 'unix' for Unix epoch time, 'interval' for periodic updates, 'prefer' for one-time sync.")
     parser.add_argument("-t", "--synctime", type=int, help="The sync time specifies the time between each loop check and update.")
     args = parser.parse_args()
@@ -218,12 +218,12 @@ if __name__ == '__main__':
     mode = args.mode or config.get("General", "mode").strip('",')
     
     syncTime = math.nan if args.mode in ['prefer'] else args.synctime if args.synctime else config.getint("General", "syncTime", fallback=36000)
+
     try:    
         logger.log(f">>====<< {re.sub(r'(?<!^)(?=[A-Z])', ' ', mode).title()} execute >>====<<")
         if mode in ["intervalTime", "interval"]:
             asyncio.run(AsynchronousPeriodic().interval(syncTime))
         elif mode in ["unixEpoch", "unix"]:
-            if syncTime > 86_400 and not syncTime: raise ValueError("Unix time must be less than 86,400 seconds (24 hours).")
             rtime = unixConvert(syncTime)
             asyncio.run(AsynchronousPeriodic().unix(syncTime))
         elif args.mode in ['prefer']:

@@ -8,7 +8,7 @@ from typing import Any, Union, Optional
 class ifconfig:
     def __init__(self, path: str = 'all.json') -> None:
         self.api_uri = f'https://ifconfig.me/{path}'
-        self.dumps = "dumps/"
+        self.dumps = ".dumps/"
     def get(self, format: Optional[str] = None) -> Union[dict, str]:
         """Fetch data from ifconfig.me"""
         if self.api_uri.endswith('.json') and format is None: format = 'json'

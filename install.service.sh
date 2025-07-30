@@ -1,10 +1,10 @@
 #!/bin/bash
 
-echo "🔧 Installing FlexiDNS systemd service..."
+echo "🔧 Installing UDIP systemd service..."
 
 SYSTEMD_DIR="/etc/systemd/system/"
 LOCAL_DIR="$(pwd)/services/"
-SERVICE_NAME="FlexiDns.service"
+SERVICE_NAME="udip.service"
 SERVICE_EXEC="rxt.sh"
 TEMP_SERVICE="${LOCAL_DIR}${SERVICE_NAME}"
 DEFAULT_USER="$USER"
@@ -32,7 +32,7 @@ fi
 if [[ "$OVERWRITE" =~ ^[Yy]$ ]]; then
     cat <<EOF > "$TEMP_SERVICE"
 [Unit]
-Description=FlexiDNS WAN Resolver Service
+Description=Universal Dynamic Internet Protocol Resolver Service
 Documentation=
 After=network-online.target
 Wants=network-online.target

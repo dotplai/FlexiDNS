@@ -1,6 +1,6 @@
-<h1 align="center">FlexiDNS</h1>
+<h1 align="center">Universal Dynamic Internet Protocol</h1>
 
-FlexiDNS is a flexible and dynamic IP resolver and DNS updater designed for seamless network management. The application supports multiple APIs, cache persistence, and future IPv6 compatibility, making it ideal for personal or professional use.
+UDIP is a flexible and dynamic IP resolver and DNS updater designed for seamless network management. The application supports multiple APIs, cache persistence, and future IPv6 compatibility, making it ideal for personal or professional use.
 
 > This version contains [services file](/services/readme.md).
 
@@ -24,8 +24,8 @@ FlexiDNS is a flexible and dynamic IP resolver and DNS updater designed for seam
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/dotplai/FlexiDNS.git
-   cd FlexiDNS
+   git clone https://github.com/dotplai/UDIP.git
+   cd UDIP
    ```
 
 ## Configuration
@@ -61,8 +61,8 @@ FlexiDNS is a flexible and dynamic IP resolver and DNS updater designed for seam
 
 Logs are saved in the `logs/` directory:
 
-- `flexidns.log`: Contains general information about DNS updates.
-- `flexidns_debug.log`: Detailed debug logs.
+- `udip.log`: Contains general information about DNS updates.
+- `udip.debug.log`: Detailed debug logs.
 
 ## Development Roadmap
 
@@ -104,4 +104,4 @@ This project is released into the public domain under the Unlicense. See the [`L
 If you encounter any issues, please open an issue in the GitHub repository or contact the maintainer directly.
 
 ---
-Stay tuned for updates and improvements to make FlexiDNS even more powerful and versatile!
+Stay tuned for updates and improvements to make UDIP even more powerful and versatile!
