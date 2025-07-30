@@ -134,19 +134,22 @@ class AsynchronousPeriodic:
                     return total_seconds or 0
                 
                 os.makedirs('.dumps', exist_ok=True)
-                if os.path.exists('.dumps/found_address'):
+                try:
                     with open('.dumps/found_address', 'r') as f:
                         found_address: dict[str, Any] = json.load(f)
                         if found_address == inet_address_object:
-                            self.sync_logger.log("No change in public IP address, skipping update", 20)
+                            self.sync_logger.log("Public address is same as before, skipping update")
                             return total_seconds or 0
                         f.close()
-                else:
-                    with open('.dumps/found_address', 'x') as f:
-                        json.dump(inet_address_object, f, indent=4)
-                        f.close()
+                        raise TimeoutError("Public address timed out")
+                except Exception as e:
 
-                # Update all enabled APIs
+                    if isinstance(e, (FileNotFoundError, TimeoutError)):
+                        with open('.dumps/found_address', 'w') as f:
+                            json.dump(inet_address_object, f, indent=4)
+                            f.close()
+                    else: raise e
+
                 tasks = []
                 for object_name in APIs:
                     record_types = {
