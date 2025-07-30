@@ -41,7 +41,7 @@ def init_logging():
     config = ConfigParser(allow_no_value=False, default_section='General')
     config.read('config.ini')
     
-    enabled = config.getboolean('Logging', 'enabledFile')
+    enabled = config.getboolean('Logging', 'enabledFile', fallback=True)
     log_include = config.get('Logging', 'logIncluded').strip('",[] ').replace(' ', '').split(',')
     console_include = config.get('Logging', 'consoleIncluded').strip('",[] ').replace(' ', '').split(',')
 
