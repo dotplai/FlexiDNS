@@ -1,8 +1,8 @@
-<h1 align="center">FlexiDNS Service</h1>
+<h1 align="center">UDIP Service</h1>
 
-**FlexiDNS Service** is `flexidns.service` and contains `rxt.sh` file, It supports flexible sync scheduling and runs as a background systemd service.
+**UDIP Service** is `udip.service` and contains `rxt.sh` file, It supports flexible sync scheduling and runs as a background systemd service.
 
-> ⚠️ **FlexiDNS Service only supports Linux and Unix-like systems.**  
+> ⚠️ **UDIP Service only supports Linux and Unix-like systems.**  
 > It **won't work on Windows**.
 
 ## 🔧 Prerequisites
@@ -37,10 +37,10 @@
 1. Install and checking status
 
     ```bash
-    git clone https://github.com/dotplai/FlexiDNS.git
-    cd ./FlexiDNS/
+    git clone https://github.com/dotplai/UDIP.git
+    cd ./UDIP/
     ./install.service.sh
-    sudo systemctl status flexidns.service
+    sudo systemctl status udip.service
     ```
 
 ## Contributing

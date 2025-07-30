@@ -8,7 +8,7 @@ from typing import Any, Union, Optional
 class ifconfig:
     def __init__(self, path: str = 'all.json') -> None:
         self.api_uri = f'https://ifconfig.me/{path}'
-        self.dumps = "dumps/"
+        self.dumps = ".dumps/"
     def get(self, format: Optional[str] = None) -> Union[dict, str]:
         """Fetch data from ifconfig.me"""
         if self.api_uri.endswith('.json') and format is None: format = 'json'
@@ -91,3 +91,16 @@ class ipify:
         if not res.ok:
             raise ConnectionError(f"Response error: {res.status_code} - {res.reason}")
         return res.json if format in ('json' or 'jsonp') else res.text
+
+class icanhazip:
+    def __init__(self):
+        self.api_uri = f'https://icanhazip.com'
+    
+    def get(self) -> str:
+        """Fetch public IP address from icanhazip.com"""
+        res = requests.get(self.api_uri)
+        res.raise_for_status()
+        if not res.ok:
+            raise ConnectionError(f"Response error: {res.status_code} - {res.reason}")
+        
+        return res.text

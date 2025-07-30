@@ -7,9 +7,8 @@ __pycache__/
 # primary directory & files & extensions
 /dev/
 /logs/
-/cache/
 /tests/
-/dumps/
+/.*/
 
 # Configures & Services file
 config.ini

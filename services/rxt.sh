@@ -11,7 +11,7 @@ for file in "$TEMPLATE_DIR"/*; do
     filename=$(basename "$file")
 
     if [ ! -e "$BASE_PROJECT_DIR/$filename" ]; then
-        echo "Resorce '$filename' is missing - copying..."
+        echo "Resource '$filename' is missing - copying..."
         cp "$file" "$BASE_PROJECT_DIR"
         missing=true
     fi
@@ -20,7 +20,7 @@ done
 # copies miss resources from templates
 if [ "$missing" = true ]; then
     echo "Failed some resources is missing..."
-    echo "Please verify them and use 'systemctl restart flexidns.service' again."
+    echo "Please verify them and use 'systemctl restart udip.service' again."
     exit 1
 fi
 
@@ -47,7 +47,7 @@ fi
 
 # run the application
 echo "Starting the application..."
-python3 flexidns.py $(grep -v '^#' services/args.txt)
+python3 main.py $(grep -v '^#' services/args.txt)
 deactivate
 
 exit
