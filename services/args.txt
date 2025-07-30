@@ -1,4 +1,6 @@
 # Argument flags setup
+# This line for using .venv to be enviroment instead using pure python.
+:module .venv
 
 # Example multi-line:
 # -m unix

@@ -24,20 +24,23 @@ if [ "$missing" = true ]; then
     exit 1
 fi
 
-# using .venv environment
-if [[ ! -d ".venv" ]]; then
-    echo ".venv not found in the current directory."
-    echo "Creating a new virtual environment in the current directory..."
-    
-    python3 -m venv .venv
-    VENV_PATH=".venv"
-else
-    VENV_PATH=".venv"
-fi
+# check if -m flag is present in args.txt
+if grep -q "^:module .venv" services/args.txt; then
+    # using .venv environment
+    if [[ ! -d ".venv" ]]; then
+        echo ".venv not found in the current directory."
+        echo "Creating a new virtual environment in the current directory..."
+        
+        python3 -m venv .venv
+        VENV_PATH=".venv"
+    else
+        VENV_PATH=".venv"
+    fi
 
-# activate the virtual environment
-source "$VENV_PATH/bin/activate"
-echo "Virtual environment activated at $VENV_PATH."
+    # activate the virtual environment
+    source "$VENV_PATH/bin/activate"
+    echo "Virtual environment activated at $VENV_PATH."
+fi
 
 # check if requirements.txt is satisfied
 if ! pip3 freeze | grep -qF -f requirements.txt; then
@@ -47,7 +50,7 @@ fi
 
 # run the application
 echo "Starting the application..."
-python3 main.py $(grep -v '^#' services/args.txt)
+python3 main.py $(grep -v '^[#:]' services/args.txt)
 deactivate
 
 exit

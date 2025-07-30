@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Add command line argument handling
+Y_FLAG=false
+if [[ "$1" == "-y" ]]; then
+    Y_FLAG=true
+fi
+
 echo "🔧 Installing UDIP systemd service..."
 
 SYSTEMD_DIR="/etc/systemd/system/"
@@ -12,18 +18,22 @@ DEFAULT_USER="$USER"
 # Check if template service file exists
 if [[ -f "$TEMP_SERVICE" ]]; then
     echo "⚠️  Template service file already exists at: $TEMP_SERVICE"
-    read -p "Override it? (y/n): " OVERWRITE
-    case "$OVERWRITE" in
-        [Yy])
-            ;;
-        [Nn])
-            echo "ℹ️ Keeping existing service template."
-            ;;
-        *)
-            echo "❌ Invalid input. Please enter 'y' or 'n'."
-            exit 1
-            ;;
-    esac
+    if ! $Y_FLAG; then
+        read -p "Override it? (y/n): " OVERWRITE
+        case "$OVERWRITE" in
+            [Yy])
+                ;;
+            [Nn])
+                echo "ℹ️ Keeping existing service template."
+                ;;
+            *)
+                echo "❌ Invalid input. Please enter 'y' or 'n'."
+                exit 1
+                ;;
+        esac
+    else
+        OVERWRITE="y"
+    fi
 else
     OVERWRITE="y"
 fi
@@ -54,7 +64,9 @@ echo "----- start of service file -----"
 cat "$TEMP_SERVICE"
 echo "-----  end of service file  -----"
 
-read -p "➡️ Press Enter to continue installing..."
+if ! $Y_FLAG; then
+    read -p "➡️ Press Enter to continue installing..."
+fi
 
 # Install and activate the service
 for SERVICE_FILE in "$LOCAL_DIR"*.service; do
@@ -66,6 +78,7 @@ for SERVICE_FILE in "$LOCAL_DIR"*.service; do
 
         # Reinstall confirmation
         read -p "Uninstall or reinstall or nothing? (u/r/n): " ACTION
+
         case "$ACTION" in
             [Rr])
                 sudo cp "$SERVICE_FILE" "$TARGET_PATH"

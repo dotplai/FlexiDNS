@@ -34,17 +34,30 @@ UDIP is a flexible and dynamic IP resolver and DNS updater designed for seamless
 
    ```ini
    [General]
-   loopingMethod = "intervalTime"
-   syncTime = 720
+      queryAPI = "ipify"
+      mode = "unixEpoch"
+      syncTime = 300
+
+   [Logging]
+      enabledFile = True
+
+      consoleIncluded = [normal, debug, error]
+      logIncluded = [normal, error]
+      splitLog = False
+
+   [LearningBehavior]
+      timeShift = [True, 300]
 
    [CloudFlare]
-   enabled = True
-   email = "your-email@example.com"
-   password = "your-api-token"
-   FQDNv4 = ["example.com", "subdomain.example.com"]
-   FQDNv6 = ["example.com", "subdomain.example.com"]
-   cacheTimeout = 172800
-   cachePersistent = True
+      enabled = True
+
+      email = "YOUR_EMAIL_OF_CLOUDFLARE"
+      password = "YOUR_GLOBAL_OR_LOCAL_API_KEY"
+
+      FQDN = '{"A": ["example.com"], "AAAA": ["v6.example.com"]}'
+
+      cacheTimeout = 172800
+      cachePersistent = True
    ```
 
 ## Usage

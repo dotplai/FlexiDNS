@@ -17,19 +17,30 @@
 
    ```ini
    [General]
-   loopingMethod = "unixEpoch"
-   syncTime = 300 # seconds
+      queryAPI = "ipify"
+      mode = "unixEpoch"
+      syncTime = 300
+
+   [Logging]
+      enabledFile = True
+
+      consoleIncluded = [normal, debug, error]
+      logIncluded = [normal, error]
+      splitLog = False
+
+   [LearningBehavior]
+      timeShift = [True, 300]
 
    [CloudFlare]
-   enabled = True
+      enabled = True
 
-   email = "YOUR_EMAIL_OF_CLOUDFLARE"
-   password = "YOUR_GLOBAL_OR_LOCAL_API_KEY"
+      email = "YOUR_EMAIL_OF_CLOUDFLARE"
+      password = "YOUR_GLOBAL_OR_LOCAL_API_KEY"
 
-   FQDN = '{"A": ["example.com"], "AAAA": ["v6.example.com"]}'
+      FQDN = '{"A": ["example.com"], "AAAA": ["v6.example.com"]}'
 
-   cacheTimeout = 172800 # cache timeout or out-dated
-   cachePersistent = True # store cache as persistent on your machine
+      cacheTimeout = 172800
+      cachePersistent = True
    ```
 
 ## 📦 Installation Service
@@ -39,7 +50,7 @@
     ```bash
     git clone https://github.com/dotplai/UDIP.git
     cd ./UDIP/
-    ./install.service.sh
+    ./service.installer.sh -y
     sudo systemctl status udip.service
     ```
 
