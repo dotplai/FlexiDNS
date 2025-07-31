@@ -17,40 +17,64 @@ for file in "$TEMPLATE_DIR"/*; do
     fi
 done
 
-# copies miss resources from templates
+# copies missing resources from templates
 if [ "$missing" = true ]; then
-    echo "Failed some resources is missing..."
+    echo "Failed some resources are missing..."
     echo "Please verify them and use 'systemctl restart udip.service' again."
     exit 1
 fi
 
-# check if -m flag is present in args.txt
-if grep -q "^:module .venv" services/args.txt; then
-    # using .venv environment
-    if [[ ! -d ".venv" ]]; then
-        echo ".venv not found in the current directory."
-        echo "Creating a new virtual environment in the current directory..."
-        
-        python3 -m venv .venv
-        VENV_PATH=".venv"
-    else
-        VENV_PATH=".venv"
+# parse args.txt
+ARG_FILE="services/args.txt"
+colon_vars=()
+double_colon_vars=()
+dash_vars=()
+
+while IFS= read -r line; do
+    # remove leading/trailing whitespace
+    line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    [[ -z "$line" || "$line" =~ ^# ]] && continue
+
+    if [[ "$line" == :* && "$line" != ::* ]]; then
+        # remove ":"
+        val="${line:1}"
+        colon_vars+=($val)
+    elif [[ "$line" == ::* ]]; then
+        val="${line:2}"
+        double_colon_vars+=("-$val")
+    elif [[ "$line" == -* ]]; then
+        dash_vars+=($line)
+    fi
+done < "$ARG_FILE"
+
+# If module of virtual environment is already set.
+ENV_NAME="${colon_vars[0]}"
+ENV_PATH="${colon_vars[2]:-.$ENV_NAME}"
+
+if [ -n "$ENV_NAME" ]; then
+    if [[ ! -d "$ENV_PATH" ]]; then
+        echo "Virtual environment not found at $ENV_PATH"
+        echo "Creating a new virtual environment..."
+
+        python3 -m "$ENV_NAME" "$ENV_PATH"
     fi
 
-    # activate the virtual environment
-    source "$VENV_PATH/bin/activate"
-    echo "Virtual environment activated at $VENV_PATH."
+    source "$ENV_PATH/bin/activate"
+    echo "Virtual environment activated at $ENV_PATH"
 fi
 
 # check if requirements.txt is satisfied
 if ! pip3 freeze | grep -qF -f requirements.txt; then
     echo "Installing missing dependencies from requirements.txt..."
     pip3 install -r requirements.txt
-fi  
+fi
 
-# run the application
+# build final command
+CMD=(python3 "${double_colon_vars[@]}" main.py "${dash_vars[@]}")
+
 echo "Starting the application..."
-python3 main.py $(grep -v '^[#:]' services/args.txt)
-deactivate
+echo "> ${CMD[*]}"
+"${CMD[@]}"
 
+deactivate
 exit

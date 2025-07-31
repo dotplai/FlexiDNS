@@ -42,7 +42,28 @@
       cacheTimeout = 172800
       cachePersistent = True
    ```
+2. Open the `args.txt` file to configure argument of service. Here's an example:
+   ```ini
+   # Argument flags setup
+   # ":{options}" is prefer run python3 (just setup) like :m or :module
+   # "::{options}" is put before main script ::O ::B or ::S
+   # "-{options}" is put after main script line
 
+   # This line for using .venv to be enviroment instead using pure python.
+   :module venv .venv
+   # This line for optimize and improve python scripts.
+   ::O
+
+   #This line is arguments flags it'll put after `python3 main.py`
+   # like `python3 main.py -m unix -t 700`
+   -m unix -t 700
+   
+   # Arguments summizer:
+   # python3 -m venv .venv
+   # source ".venv/bin/activate"
+   # python3 -O $(pwd)/main.py -m unix -t 700
+   """
+   ```
 ## 📦 Installation Service
 
 1. Install and checking status
