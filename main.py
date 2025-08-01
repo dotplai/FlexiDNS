@@ -207,7 +207,7 @@ class AsynchronousPeriodic:
             self.sync_logger.log("Cycle completed. Sleeping until next scheduled time.")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="UDIP Dynamic Updater")
+    parser = argparse.ArgumentParser(description="UDIP Dynamic Updater", exit_on_error=True)
     parser.add_argument("-m", "--mode", type=str, choices=["unix", "interval", "prefer"], help="The mode of operation for the updater. 'unix' for Unix epoch time, 'interval' for periodic updates, 'prefer' for one-time sync.")
     parser.add_argument("-t", "--synctime", type=int, help="The sync time specifies the time between each loop check and update.")
     args = parser.parse_args()
@@ -218,9 +218,9 @@ if __name__ == '__main__':
     if args.mode == 'prefer' and args.synctime is not None:
         parser.error("--synctime (-t) is not allowed when --mode (-m) is 'prefer'")
 
-    mode = args.mode or config.get("General", "mode").strip('",')
+    mode = str(args.mode) if args.mode else config.get("General", "mode", fallback="intervalTime").strip('",')
     
-    syncTime = math.nan if args.mode in ['prefer'] else args.synctime if args.synctime else config.getint("General", "syncTime", fallback=36000)
+    syncTime = math.nan if args.mode in ['prefer'] else int(args.synctime) if args.synctime else config.getint("General", "syncTime", fallback=36000)
 
     try:    
         logger.log(f">>====<< {re.sub(r'(?<!^)(?=[A-Z])', ' ', mode).title()} execute >>====<<")

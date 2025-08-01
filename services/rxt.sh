@@ -23,20 +23,32 @@ while IFS= read -r line; do
     fi
 done < "$ARG_FILE"
 
-# If module of virtual environment is already set.
-ENV_NAME="${colon_vars[0]}"
-ENV_PATH="${colon_vars[2]:-.$ENV_NAME}"
+# Colon variables arguments name
+VAR_NAME="${colon_vars[0]}"
 
-if [ -n "$ENV_NAME" ]; then
-    if [[ ! -d "$ENV_PATH" ]]; then
+# If module of virtual environment is already set.
+ENV_NAME="${colon_vars[1]}"
+ENV_PATH="${colon_vars[2]:-.$ENV_NAME}"
+ENV_PYVER="${colon_vars[3]}"
+if [[ "$VAR_NAME" == "module" ]]; then
+    if [[ "$ENV_NAME" == "venv" ]]; then
         echo "Virtual environment not found at $ENV_PATH"
         echo "Creating a new virtual environment..."
-
         python3 -m "$ENV_NAME" "$ENV_PATH"
-    fi
 
-    source "$ENV_PATH/bin/activate"
-    echo "Virtual environment activated at $ENV_PATH"
+        echo "Activating virtual environment..."
+        source "$ENV_PATH/bin/activate"
+    elif [[ "$ENV_NAME" == "conda" ]]; then
+        echo "Virtual environment not found at $ENV_PATH"
+        echo "Creating a new virtual environment..."
+        conda create -p "$ENV_NAME" $ENV_PYVER -y
+
+        echo "Activating virtual environment..."
+        conda activate "$ENV_PATH"
+    else
+        echo "Unsupported virtual environment type: $ENV_NAME"
+        exit 1
+    fi
 fi
 
 # check if requirements.txt is satisfied
