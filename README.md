@@ -65,7 +65,7 @@ UDIP is a flexible and dynamic IP resolver and DNS updater designed for seamless
 1. Start the application:
 
    ```bash
-   ./start.sh
+   ./activate.sh
    ```
 
 2. Follow the on-screen instructions for virtual environment setup and requirements installation.
@@ -76,6 +76,7 @@ Logs are saved in the `logs/` directory:
 
 - `udip.log`: Contains general information about DNS updates.
 - `udip.debug.log`: Detailed debug logs.
+- `udip.error.log`: Detailed error logs.
 
 ## Development Roadmap
 

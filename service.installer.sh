@@ -8,12 +8,29 @@ fi
 
 echo "🔧 Installing UDIP systemd service..."
 
-SYSTEMD_DIR="/etc/systemd/system/"
-LOCAL_DIR="$(pwd)/services/"
+# Declare variables
+BASE_PROJECT_DIR="$(pwd)/"
+TEMPLATE_DIR="${BASE_PROJECT_DIR}templates/"
+LOCAL_DIR="${BASE_PROJECT_DIR}services/"
+
 SERVICE_NAME="udip.service"
 SERVICE_EXEC="rxt.sh"
 TEMP_SERVICE="${LOCAL_DIR}${SERVICE_NAME}"
 DEFAULT_USER="$USER"
+
+SYSTEMD_DIR="/etc/systemd/system/"
+
+# verify resources
+echo "Verifying resources..."
+for file in "$TEMPLATE_DIR"/*; do
+    filename=$(basename "$file")
+
+    if [ ! -e "$BASE_PROJECT_DIR/$filename" ]; then
+        echo "Resource '$filename' is missing"
+        cp "$file" "$BASE_PROJECT_DIR"
+        echo "Copied '$filename' to $BASE_PROJECT_DIR"
+    fi
+done
 
 # Check if template service file exists
 if [[ -f "$TEMP_SERVICE" ]]; then
@@ -49,7 +66,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=$(pwd)
+WorkingDirectory=${BASE_PROJECT_DIR}
 ExecStart=${LOCAL_DIR}${SERVICE_EXEC}
 Restart=on-failure
 User=${DEFAULT_USER}

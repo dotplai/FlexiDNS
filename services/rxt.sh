@@ -1,29 +1,5 @@
 #!/bin/bash
 
-# declare variables
-BASE_PROJECT_DIR=$(pwd)
-TEMPLATE_DIR="$BASE_PROJECT_DIR/templates/"
-
-# verify resources
-echo "Verifying resources..."
-missing=false
-for file in "$TEMPLATE_DIR"/*; do
-    filename=$(basename "$file")
-
-    if [ ! -e "$BASE_PROJECT_DIR/$filename" ]; then
-        echo "Resource '$filename' is missing - copying..."
-        cp "$file" "$BASE_PROJECT_DIR"
-        missing=true
-    fi
-done
-
-# copies missing resources from templates
-if [ "$missing" = true ]; then
-    echo "Failed some resources are missing..."
-    echo "Please verify them and use 'systemctl restart udip.service' again."
-    exit 1
-fi
-
 # parse args.txt
 ARG_FILE="services/args.txt"
 colon_vars=()
